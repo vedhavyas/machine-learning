@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"os"
 	"sort"
+	"strings"
 	"time"
 )
 
@@ -28,6 +29,9 @@ func loadData(model *KNNModel) error {
 
 	var originalSet [][]string
 	for _, row := range rows {
+		for i := range row {
+			row[i] = strings.TrimSpace(row[i])
+		}
 		originalSet = append(originalSet, row)
 	}
 

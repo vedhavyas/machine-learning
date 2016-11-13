@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -16,37 +17,52 @@ func main() {
 	fileName := flag.String("data", "", "Data File")
 	attributeRange := flag.String("attr-range", "", "Attribute range. Min:Max. Both inclusive")
 	classIndex := flag.String("class-index", "", "Index of the class in a given row")
+	normalise := flag.Bool("norm", false, "True to force normalise the attributes")
 	flag.Parse()
 
 	if *split > 1.0 {
-		log.Fatal("Split cannot be grater than 1.0")
+		log.Println("Split cannot be grater than 1.0")
+		flag.Usage()
+		os.Exit(1)
 	}
 
 	if *fileName == "" {
-		log.Fatal("Data file cannot be empty")
+		log.Println("Data file cannot be empty")
+		flag.Usage()
+		os.Exit(1)
 	}
 
 	if *attributeRange == "" {
-		log.Fatal("Attribute range cannot be empty")
+		log.Println("Attribute range cannot be empty")
+		flag.Usage()
+		os.Exit(1)
 	}
 	attrs := strings.Split(*attributeRange, ":")
 	attrStart, err := strconv.Atoi(attrs[0])
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		flag.Usage()
+		os.Exit(1)
 	}
 
 	attrEnd, err := strconv.Atoi(attrs[1])
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		flag.Usage()
+		os.Exit(1)
 	}
 
 	if *classIndex == "" {
-		log.Fatal("Class Index cannot be empty")
+		log.Println("Class Index cannot be empty")
+		flag.Usage()
+		os.Exit(1)
 	}
 
 	classIndexInt, err := strconv.Atoi(*classIndex)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		flag.Usage()
+		os.Exit(1)
 	}
 
 	model := &KNNModel{
@@ -56,7 +72,7 @@ func main() {
 		AttributeIndexStart:    attrStart,
 		AttributeIndexEnd:      attrEnd,
 		ClassIndex:             classIndexInt,
-		AttributeNormalisation: false,
+		AttributeNormalisation: *normalise,
 	}
 
 	response, err := Benchmark(model)
