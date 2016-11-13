@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/csv"
 	"fmt"
-	"log"
 	"math"
 	"math/rand"
 	"os"
@@ -23,43 +22,42 @@ type KNNModel struct {
 
 type BenchmarkResponse struct {
 	K        int
-	Accuracy float64
+	Accuracy float32
 }
 
 func (res BenchmarkResponse) String() string {
 	return fmt.Sprintf(
 		"K: %v\nAccuracy: %v",
 		res.K,
-		res.Accuracy,
+		res.Accuracy*float32(100),
 	)
 }
 
-type DistanceResult struct {
+type Neighbour struct {
 	Distance float64
 	Class    string
 }
 
-type DistanceResults []DistanceResult
+type Neighbours []Neighbour
 
-func (r DistanceResults) Len() int {
+func (r Neighbours) Len() int {
 	return len(r)
 }
 
-func (r DistanceResults) Less(i, j int) bool {
+func (r Neighbours) Less(i, j int) bool {
 	return r[i].Distance <= r[j].Distance
 }
 
-func (r DistanceResults) Swap(i, j int) {
+func (r Neighbours) Swap(i, j int) {
 	r[i], r[j] = r[j], r[i]
 }
 
 func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
-	log.SetFlags(log.Lshortfile | log.Ltime)
 }
 
 func loadData(model *KNNModel) error {
-	log.Printf("Loading data from '%v'...\n", model.FileName)
+	fmt.Printf("Loading data from '%v'...\n", model.FileName)
 	fh, err := os.Open(model.FileName)
 	if err != nil {
 		return err
@@ -77,8 +75,8 @@ func loadData(model *KNNModel) error {
 	trainingClasses, testingClasses := splitSet(model.OriginalSet, model.Split)
 	model.TrainingSet = trainingClasses
 	model.TestingSet = testingClasses
-	log.Println("Split successful...")
-	log.Printf("Tranining Set - %v, Testing Set - %v\n", len(model.TrainingSet), len(model.TestingSet))
+	fmt.Println("Split successful...")
+	fmt.Printf("Tranining Set - %v, Testing Set - %v\n", len(model.TrainingSet), len(model.TestingSet))
 	return nil
 }
 
@@ -113,7 +111,7 @@ func getEuclideanDistance(instance1, instance2 []string, length int) (float64, e
 }
 
 func getExpectedClass(model *KNNModel, testInstance []string) (string, error) {
-	var distanceResults DistanceResults
+	var neighbours Neighbours
 
 	// calculate distance from all the training instances
 	for _, instance := range model.TrainingSet {
@@ -121,18 +119,18 @@ func getExpectedClass(model *KNNModel, testInstance []string) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		distanceResults = append(distanceResults,
-			DistanceResult{
+		neighbours = append(neighbours,
+			Neighbour{
 				Distance: distance,
 				Class:    instance[4],
 			})
 	}
 
 	// sort the distances result in ascending order based on distances
-	sort.Sort(distanceResults)
+	sort.Sort(neighbours)
 
 	// pick the instances based on K
-	selectedInstances := distanceResults[:model.K]
+	selectedInstances := neighbours[:model.K]
 
 	// pick the top rated
 	if len(selectedInstances) == 1 {
@@ -173,13 +171,14 @@ func Benchmark(model *KNNModel) (BenchmarkResponse, error) {
 		if err != nil {
 			return BenchmarkResponse{}, err
 		}
-
+		fmt.Printf("Predicted - %v, Actual - %v\n", class, instance[4])
 		if class == instance[4] {
 			correctPredictions += 1
 		}
 	}
 
-	accuracy := float64(correctPredictions) / float64(len(model.TestingSet))
+	fmt.Printf("Predicted %v correctly from %v instances\n", correctPredictions, len(model.TestingSet))
+	accuracy := float32(correctPredictions) / float32(len(model.TestingSet))
 
 	return BenchmarkResponse{Accuracy: accuracy, K: model.K}, nil
 }
