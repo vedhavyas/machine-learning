@@ -1,9 +1,6 @@
 package knn
 
-import (
-	"log"
-	"testing"
-)
+import "testing"
 
 func Test_splitClasses(t *testing.T) {
 	cases := []struct {
@@ -52,16 +49,15 @@ func Test_splitClasses(t *testing.T) {
 	}
 
 	for _, testCase := range cases {
-		trainingClasses, testingClasses := splitClasses(testCase.Data, testCase.Spilt)
+		trainingClasses, testingClasses := splitSet(testCase.Data, testCase.Spilt)
 		expectedSplit := int(testCase.Spilt * float32(len(testCase.Data)))
-		log.Println(trainingClasses, testingClasses)
 
 		if len(trainingClasses)+len(testingClasses) != len(testCase.Data) {
 			t.Fatalf("Length mismatch - Expected %v, Result %v",
 				len(testCase.Data), len(trainingClasses)+len(testingClasses))
 		}
 
-		if len(trainingClasses) > expectedSplit {
+		if len(trainingClasses) != expectedSplit {
 			t.Fatalf("Training - Expected %v,  Result %v",
 				expectedSplit, len(trainingClasses))
 		}
