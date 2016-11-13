@@ -13,7 +13,8 @@ type KNNModel struct {
 	FileName               string
 	K                      int
 	ClassIndex             int
-	AttributeIndexRange    int
+	AttributeIndexStart    int
+	AttributeIndexEnd      int
 	categoricalAttributes  map[int]map[string]float64
 	Split                  float32
 	AttributeNormalisation bool

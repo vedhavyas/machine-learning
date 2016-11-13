@@ -54,9 +54,9 @@ func splitSet(originalData [][]float64, split float32) ([][]float64, [][]float64
 	return shuffledData[:trainingIndex], shuffledData[trainingIndex:]
 }
 
-func getEuclideanDistance(instance1, instance2 []float64, length int) float64 {
+func getEuclideanDistance(instance1, instance2 []float64, start, end int) float64 {
 	var distance float64
-	for i := 0; i < length; i++ {
+	for i := start; i <= end; i++ {
 		x := instance1[i]
 		y := instance2[i]
 		distance += math.Pow(x-y, 2)
@@ -70,7 +70,8 @@ func getExpectedClass(model *KNNModel, testInstance []float64) string {
 
 	// calculate distance from all the training instances
 	for _, instance := range model.trainingSet {
-		distance := getEuclideanDistance(instance, testInstance, model.AttributeIndexRange)
+		distance := getEuclideanDistance(
+			instance, testInstance, model.AttributeIndexStart, model.AttributeIndexEnd)
 		neighbour := Neighbour{
 			Distance: distance,
 			Class:    model.GetClassString(instance[model.ClassIndex]),
