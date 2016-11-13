@@ -1,2 +1,2 @@
-# machine-learning-algo
-Machine Learning algorithms
+# machine-learning
+Everything related to Machine Learning
