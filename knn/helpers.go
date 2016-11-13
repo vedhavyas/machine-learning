@@ -7,7 +7,6 @@ import (
 	"math/rand"
 	"os"
 	"sort"
-	"strconv"
 	"time"
 )
 
@@ -27,17 +26,14 @@ func loadData(model *KNNModel) error {
 		return err
 	}
 
+	var originalSet [][]string
 	for _, row := range rows {
-		model.originalSet = append(model.originalSet, row)
+		originalSet = append(originalSet, row)
 	}
 
-	model.CheckForCategoricalAttributes()
+	model.NormaliseData(originalSet)
 
-	if model.AttributeNormalisation {
-		model.NormaliseData()
-	}
-
-	trainingClasses, testingClasses := splitSet(model.originalSet, model.Split)
+	trainingClasses, testingClasses := splitSet(model.normaliseSet, model.Split)
 	model.trainingSet = trainingClasses
 	model.testingSet = testingClasses
 	fmt.Println("Split successful...")
@@ -45,8 +41,8 @@ func loadData(model *KNNModel) error {
 	return nil
 }
 
-func splitSet(originalData [][]string, split float32) ([][]string, [][]string) {
-	shuffledData := make([][]string, len(originalData))
+func splitSet(originalData [][]float64, split float32) ([][]float64, [][]float64) {
+	shuffledData := make([][]float64, len(originalData))
 	shuffleInstance := rand.Perm(len(originalData))
 
 	for i, v := range shuffleInstance {
@@ -58,37 +54,28 @@ func splitSet(originalData [][]string, split float32) ([][]string, [][]string) {
 	return shuffledData[:trainingIndex], shuffledData[trainingIndex:]
 }
 
-func getEuclideanDistance(instance1, instance2 []string, length int) (float64, error) {
+func getEuclideanDistance(instance1, instance2 []float64, length int) float64 {
 	var distance float64
 	for i := 0; i < length; i++ {
-		x, err := strconv.ParseFloat(instance1[i], 64)
-		if err != nil {
-			return distance, err
-		}
-		y, err := strconv.ParseFloat(instance2[i], 64)
-		if err != nil {
-			return distance, err
-		}
+		x := instance1[i]
+		y := instance2[i]
 		distance += math.Pow(x-y, 2)
 	}
 
-	return math.Sqrt(distance), nil
+	return math.Sqrt(distance)
 }
 
-func getExpectedClass(model *KNNModel, testInstance []string) (string, error) {
+func getExpectedClass(model *KNNModel, testInstance []float64) string {
 	var neighbours Neighbours
 
 	// calculate distance from all the training instances
 	for _, instance := range model.trainingSet {
-		distance, err := getEuclideanDistance(instance, testInstance, model.AttributeIndexRange)
-		if err != nil {
-			return "", err
+		distance := getEuclideanDistance(instance, testInstance, model.AttributeIndexRange)
+		neighbour := Neighbour{
+			Distance: distance,
+			Class:    model.GetClassString(instance[model.ClassIndex]),
 		}
-		neighbours = append(neighbours,
-			Neighbour{
-				Distance: distance,
-				Class:    instance[model.ClassIndex],
-			})
+		neighbours = append(neighbours, neighbour)
 	}
 
 	// sort the distances result in ascending order based on distances
@@ -99,7 +86,7 @@ func getExpectedClass(model *KNNModel, testInstance []string) (string, error) {
 
 	// pick the top rated
 	if len(selectedInstances) == 1 {
-		return selectedInstances[0].Class, nil
+		return selectedInstances[0].Class
 	}
 
 	election := make(map[string]int)
@@ -119,7 +106,7 @@ func getExpectedClass(model *KNNModel, testInstance []string) (string, error) {
 		winningClass = k
 	}
 
-	return winningClass, nil
+	return winningClass
 }
 
 func Benchmark(model *KNNModel) (BenchmarkResponse, error) {
@@ -132,12 +119,10 @@ func Benchmark(model *KNNModel) (BenchmarkResponse, error) {
 
 	var correctPredictions int
 	for _, instance := range model.testingSet {
-		class, err := getExpectedClass(model, instance)
-		if err != nil {
-			return BenchmarkResponse{}, err
-		}
-		fmt.Printf("Predicted - %v, Actual - %v\n", class, instance[model.ClassIndex])
-		if class == instance[model.ClassIndex] {
+		class := getExpectedClass(model, instance)
+		actualClass := model.GetClassString(instance[model.ClassIndex])
+		fmt.Printf("Predicted - %v, Actual - %v\n", class, actualClass)
+		if class == actualClass {
 			correctPredictions += 1
 		}
 	}
