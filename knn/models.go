@@ -1,17 +1,58 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+)
 
 type KNNModel struct {
-	Split                  float32
-	OriginalSet            [][]string
-	TrainingSet            [][]string
-	TestingSet             [][]string
+	originalSet            [][]string
+	trainingSet            [][]string
+	testingSet             [][]string
 	FileName               string
 	K                      int
 	ClassIndex             int
 	AttributeIndexRange    int
+	categoricalAttributes  []int
+	Split                  float32
 	AttributeNormalisation bool
+}
+
+func (model *KNNModel) IsCategoricalAttribute(index int) bool {
+	for _, v := range model.categoricalAttributes {
+		if v == index {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (model *KNNModel) SetCategoricalAttribute(index int) {
+	if model.IsCategoricalAttribute(index) {
+		return
+	}
+	model.categoricalAttributes = append(model.categoricalAttributes, index)
+	model.AttributeNormalisation = true
+}
+
+func (model *KNNModel) NormaliseData() {
+
+}
+
+func (model *KNNModel) CheckForCategoricalAttributes() {
+	// we try to convert the attributes in the first row to float64
+	// any failures is considered categorical
+	instance := model.originalSet[0]
+	for i := 0; i < model.AttributeIndexRange; i++ {
+		_, err := strconv.ParseFloat(instance[i], 64)
+		if err == nil {
+			continue
+		}
+
+		// must be a categorical values
+		model.SetCategoricalAttribute(i)
+	}
 }
 
 type BenchmarkResponse struct {

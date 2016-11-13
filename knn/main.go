@@ -7,6 +7,7 @@ import (
 )
 
 func main() {
+	log.SetFlags(log.Lshortfile)
 
 	k := flag.Int("k", 3, "Value K for the Benchmark")
 	split := flag.Float64("split", 0.6, "Spilit percentage of data. Should be between 0 - 1 float")

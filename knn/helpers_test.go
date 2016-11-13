@@ -87,9 +87,9 @@ func Test_loadData(t *testing.T) {
 
 	for _, testCase := range cases {
 		loadData(testCase.Model)
-		assert.Equal(t, testCase.ExpectedInstances, len(testCase.Model.OriginalSet))
+		assert.Equal(t, testCase.ExpectedInstances, len(testCase.Model.originalSet))
 		assert.Equal(t, testCase.ExpectedInstances,
-			len(testCase.Model.TrainingSet)+len(testCase.Model.TestingSet),
+			len(testCase.Model.trainingSet)+len(testCase.Model.testingSet),
 		)
 	}
 }

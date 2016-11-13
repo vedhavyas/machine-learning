@@ -28,23 +28,21 @@ func loadData(model *KNNModel) error {
 	}
 
 	for _, row := range rows {
-		model.OriginalSet = append(model.OriginalSet, row)
+		model.originalSet = append(model.originalSet, row)
 	}
+
+	model.CheckForCategoricalAttributes()
 
 	if model.AttributeNormalisation {
-		normaliseData(model)
+		model.NormaliseData()
 	}
 
-	trainingClasses, testingClasses := splitSet(model.OriginalSet, model.Split)
-	model.TrainingSet = trainingClasses
-	model.TestingSet = testingClasses
+	trainingClasses, testingClasses := splitSet(model.originalSet, model.Split)
+	model.trainingSet = trainingClasses
+	model.testingSet = testingClasses
 	fmt.Println("Split successful...")
-	fmt.Printf("Tranining Set - %v, Testing Set - %v\n", len(model.TrainingSet), len(model.TestingSet))
+	fmt.Printf("Tranining Set - %v, Testing Set - %v\n", len(model.trainingSet), len(model.testingSet))
 	return nil
-}
-
-func normaliseData(model *KNNModel) {
-	// nothing happening here
 }
 
 func splitSet(originalData [][]string, split float32) ([][]string, [][]string) {
@@ -81,7 +79,7 @@ func getExpectedClass(model *KNNModel, testInstance []string) (string, error) {
 	var neighbours Neighbours
 
 	// calculate distance from all the training instances
-	for _, instance := range model.TrainingSet {
+	for _, instance := range model.trainingSet {
 		distance, err := getEuclideanDistance(instance, testInstance, model.AttributeIndexRange)
 		if err != nil {
 			return "", err
@@ -133,7 +131,7 @@ func Benchmark(model *KNNModel) (BenchmarkResponse, error) {
 	}
 
 	var correctPredictions int
-	for _, instance := range model.TestingSet {
+	for _, instance := range model.testingSet {
 		class, err := getExpectedClass(model, instance)
 		if err != nil {
 			return BenchmarkResponse{}, err
@@ -144,8 +142,8 @@ func Benchmark(model *KNNModel) (BenchmarkResponse, error) {
 		}
 	}
 
-	fmt.Printf("Predicted %v correctly from %v instances\n", correctPredictions, len(model.TestingSet))
-	accuracy := float32(correctPredictions) / float32(len(model.TestingSet))
+	fmt.Printf("Predicted %v correctly from %v instances\n", correctPredictions, len(model.testingSet))
+	accuracy := float32(correctPredictions) / float32(len(model.testingSet))
 
 	return BenchmarkResponse{Accuracy: accuracy, K: model.K}, nil
 }
