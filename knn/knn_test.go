@@ -1,6 +1,10 @@
 package main
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
 
 func Test_splitClasses(t *testing.T) {
 	cases := []struct {
@@ -68,4 +72,24 @@ func Test_splitClasses(t *testing.T) {
 		}
 	}
 
+}
+
+func Test_loadData(t *testing.T) {
+	cases := []struct {
+		Model             *KNNModel
+		ExpectedInstances int
+	}{
+		{
+			Model:             &KNNModel{FileName: "data/iris.data", Split: 0.7},
+			ExpectedInstances: 150,
+		},
+	}
+
+	for _, testCase := range cases {
+		loadData(testCase.Model)
+		assert.Equal(t, testCase.ExpectedInstances, len(testCase.Model.OriginalSet))
+		assert.Equal(t, testCase.ExpectedInstances,
+			len(testCase.Model.TrainingSet)+len(testCase.Model.TestingSet),
+		)
+	}
 }
