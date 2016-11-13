@@ -1,7 +1,9 @@
-package knn
+package main
 
 import (
 	"encoding/csv"
+	"fmt"
+	"log"
 	"math"
 	"math/rand"
 	"os"
@@ -24,6 +26,14 @@ type BenchmarkResponse struct {
 	Accuracy float64
 }
 
+func (res BenchmarkResponse) String() string {
+	return fmt.Sprintf(
+		"K: %v\nAccuracy: %v",
+		res.K,
+		res.Accuracy,
+	)
+}
+
 type DistanceResult struct {
 	Distance float64
 	Class    string
@@ -31,23 +41,25 @@ type DistanceResult struct {
 
 type DistanceResults []DistanceResult
 
-func (r *DistanceResults) Len() int {
+func (r DistanceResults) Len() int {
 	return len(r)
 }
 
-func (r *DistanceResults) Less(i, j int) bool {
+func (r DistanceResults) Less(i, j int) bool {
 	return r[i].Distance <= r[j].Distance
 }
 
-func (r *DistanceResults) Swap(i, j int) {
+func (r DistanceResults) Swap(i, j int) {
 	r[i], r[j] = r[j], r[i]
 }
 
 func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
+	log.SetFlags(log.Lshortfile | log.Ltime)
 }
 
 func loadData(model *KNNModel) error {
+	log.Printf("Loading data from '%v'...\n", model.FileName)
 	fh, err := os.Open(model.FileName)
 	if err != nil {
 		return err
@@ -65,6 +77,8 @@ func loadData(model *KNNModel) error {
 	trainingClasses, testingClasses := splitSet(model.OriginalSet, model.Split)
 	model.TrainingSet = trainingClasses
 	model.TestingSet = testingClasses
+	log.Println("Split successful...")
+	log.Printf("Tranining Set - %v, Testing Set - %v\n", len(model.TrainingSet), len(model.TestingSet))
 	return nil
 }
 
@@ -83,19 +97,19 @@ func splitSet(originalData [][]string, split float32) ([][]string, [][]string) {
 
 func getEuclideanDistance(instance1, instance2 []string, length int) (float64, error) {
 	var distance float64
-	for i := 0; i <= length; i++ {
+	for i := 0; i < length; i++ {
 		x, err := strconv.ParseFloat(instance1[i], 64)
 		if err != nil {
-			return err
+			return distance, err
 		}
 		y, err := strconv.ParseFloat(instance2[i], 64)
 		if err != nil {
-			return err
+			return distance, err
 		}
 		distance += math.Pow(x-y, 2)
 	}
 
-	return math.Sqrt(distance)
+	return math.Sqrt(distance), nil
 }
 
 func getExpectedClass(model *KNNModel, testInstance []string) (string, error) {
@@ -122,7 +136,7 @@ func getExpectedClass(model *KNNModel, testInstance []string) (string, error) {
 
 	// pick the top rated
 	if len(selectedInstances) == 1 {
-		return selectedInstances[0].Class
+		return selectedInstances[0].Class, nil
 	}
 
 	election := make(map[string]int)
@@ -145,7 +159,7 @@ func getExpectedClass(model *KNNModel, testInstance []string) (string, error) {
 	return winningClass, nil
 }
 
-func Benchmark(model **KNNModel) (BenchmarkResponse, error) {
+func Benchmark(model *KNNModel) (BenchmarkResponse, error) {
 
 	// load data first
 	err := loadData(model)
@@ -153,4 +167,19 @@ func Benchmark(model **KNNModel) (BenchmarkResponse, error) {
 		return BenchmarkResponse{}, err
 	}
 
+	var correctPredictions int
+	for _, instance := range model.TestingSet {
+		class, err := getExpectedClass(model, instance)
+		if err != nil {
+			return BenchmarkResponse{}, err
+		}
+
+		if class == instance[4] {
+			correctPredictions += 1
+		}
+	}
+
+	accuracy := float64(correctPredictions) / float64(len(model.TestingSet))
+
+	return BenchmarkResponse{Accuracy: accuracy, K: model.K}, nil
 }
