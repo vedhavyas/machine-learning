@@ -78,18 +78,37 @@ func Test_loadData(t *testing.T) {
 	cases := []struct {
 		Model             *KNNModel
 		ExpectedInstances int
+		ErrorExpected     bool
 	}{
 		{
 			Model:             &KNNModel{FileName: "data/iris.data", Split: 0.7},
 			ExpectedInstances: 150,
 		},
+
+		{
+			Model:         &KNNModel{FileName: "iris.data", Split: 0.7},
+			ErrorExpected: true,
+		},
+
+		{
+			Model:         &KNNModel{FileName: "data/iris.csv", Split: 0.7},
+			ErrorExpected: true,
+		},
 	}
 
 	for _, testCase := range cases {
-		loadData(testCase.Model)
-		assert.Equal(t, testCase.ExpectedInstances, len(testCase.Model.OriginalSet))
+		err := loadData(testCase.Model)
+		if err != nil {
+			if testCase.ErrorExpected {
+				continue
+			}
+
+			assert.Fail(t, "Loading data failed", err)
+			continue
+		}
+		assert.Equal(t, testCase.ExpectedInstances, len(testCase.Model.originalSet))
 		assert.Equal(t, testCase.ExpectedInstances,
-			len(testCase.Model.TrainingSet)+len(testCase.Model.TestingSet),
+			len(testCase.Model.trainingSet)+len(testCase.Model.testingSet),
 		)
 	}
 }
