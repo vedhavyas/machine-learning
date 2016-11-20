@@ -16,8 +16,6 @@ type PerceptronModel struct {
 	Epochs                 int
 	data                   [][]float64
 	ClassIndex             int
-	AttributeIndexStart    int
-	AttributeIndexEnd      int
 	categoricalAttributes  map[int]map[string]float64
 	AttributeNormalisation bool
 }

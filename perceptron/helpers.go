@@ -98,7 +98,7 @@ func trainWeights(trainData [][]float64, learningRate float64, epoch, classIndex
 	return weights
 }
 
-func executeSet(ID int, wg *sync.WaitGroup, trainingSet, testingSet [][]float64, learningRate float64, epoch, classIndex int) {
+func executeSet(ID int, wg *sync.WaitGroup, resultCh chan<- float64, trainingSet, testingSet [][]float64, learningRate float64, epoch, classIndex int) {
 	fmt.Printf("%v starting with training %v and testing %v\n", ID, len(trainingSet), len(testingSet))
 	weights := trainWeights(trainingSet, learningRate, epoch, classIndex)
 	predictions := make([]float64, len(testingSet))
@@ -113,9 +113,9 @@ func executeSet(ID int, wg *sync.WaitGroup, trainingSet, testingSet [][]float64,
 			correctPredictions += 1
 		}
 	}
-
-	fmt.Printf("Id %v, predicted %v, total %v, accuracy %v\n", ID, correctPredictions, len(testingSet),
-		(float64(len(testingSet)) / float64(correctPredictions) * 100))
+	accuracy := (float64(correctPredictions) / float64(len(testingSet))) * 100
+	fmt.Printf("Id %v, predicted %v, total %v, accuracy %v\n", ID, correctPredictions, len(testingSet), accuracy)
+	resultCh <- accuracy
 	wg.Done()
 }
 
@@ -128,10 +128,29 @@ func ExecutePerceptron(model *PerceptronModel) error {
 	splitData := getTrainAndTestData(model.data, model.KFold)
 	wg := new(sync.WaitGroup)
 	wg.Add(model.KFold)
-	for k, v := range splitData {
-		go executeSet(k, wg, v[0], v[1], model.LearningRate, model.Epochs, model.ClassIndex)
-	}
+	resultCh := make(chan float64)
+	doneCh := make(chan bool)
 
+	go func(doneCh <-chan bool, resultCh <-chan float64, k int) {
+		var totalAccuracy float64
+		for {
+			select {
+			case result := <-resultCh:
+				totalAccuracy += result
+			case <-doneCh:
+				meanAccuracy := totalAccuracy / float64(k)
+				fmt.Printf("mean accuracy %v\n", meanAccuracy)
+				return
+			}
+		}
+	}(doneCh, resultCh, model.KFold)
+
+	for k, v := range splitData {
+		go executeSet(k, wg, resultCh, v[0], v[1], model.LearningRate, model.Epochs, model.ClassIndex)
+	}
 	wg.Wait()
+
+	doneCh <- true
+
 	return nil
 }
