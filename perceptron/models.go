@@ -22,7 +22,7 @@ type PerceptronModel struct {
 	AttributeNormalisation bool
 }
 
-func (model *PerceptronModel) GetClassString(value float64) string {
+func (model *PerceptronModel) getClassString(value float64) string {
 	categories := model.categoricalAttributes[model.ClassIndex]
 	for k, v := range categories {
 		if v == value {
@@ -33,7 +33,7 @@ func (model *PerceptronModel) GetClassString(value float64) string {
 	return ""
 }
 
-func (model *PerceptronModel) SetCategoricalAttributeIndex(index int) {
+func (model *PerceptronModel) setCategoricalAttributeIndex(index int) {
 	if model.categoricalAttributes == nil {
 		model.categoricalAttributes = make(map[int]map[string]float64)
 	}
@@ -55,7 +55,7 @@ func (model *PerceptronModel) checkForCategoricalAttributes(instances [][]string
 	indexes := len(instance)
 	for i := 0; i < indexes; i++ {
 		if i == model.ClassIndex {
-			model.SetCategoricalAttributeIndex(i)
+			model.setCategoricalAttributeIndex(i)
 			continue
 		}
 		_, err := strconv.ParseFloat(instance[i], 64)
@@ -64,7 +64,7 @@ func (model *PerceptronModel) checkForCategoricalAttributes(instances [][]string
 		}
 
 		// must be a categorical value
-		model.SetCategoricalAttributeIndex(i)
+		model.setCategoricalAttributeIndex(i)
 		model.AttributeNormalisation = true
 	}
 }
@@ -85,7 +85,7 @@ func (model *PerceptronModel) assignCategoryValues(instances [][]string) {
 	}
 }
 
-func (model *PerceptronModel) NormaliseData(instances [][]string) {
+func (model *PerceptronModel) normaliseData(instances [][]string) {
 	// look for categories
 	model.checkForCategoricalAttributes(instances)
 
@@ -143,7 +143,7 @@ func (model *PerceptronModel) NormaliseData(instances [][]string) {
 }
 
 func (model *PerceptronModel) loadData() error {
-	fmt.Printf("Loading data from '%v'...\n", model.FileName)
+	fmt.Printf("loading data from '%v'...\n", model.FileName)
 	fh, err := os.Open(model.FileName)
 	if err != nil {
 		return err
@@ -161,8 +161,11 @@ func (model *PerceptronModel) loadData() error {
 		}
 		originalSet = append(originalSet, row)
 	}
+	fmt.Printf("loaded %v rows...\n", len(originalSet))
 
-	model.NormaliseData(originalSet)
+	fmt.Println("normalising data...")
+	model.normaliseData(originalSet)
+	fmt.Println("normalisation done...")
 
 	return nil
 }

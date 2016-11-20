@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"math/rand"
+	"sync"
 	"time"
 )
 
@@ -53,4 +55,83 @@ func getSets(folds [][][]float64, k, index int) [][][]float64 {
 		trainData,
 		testData,
 	}
+}
+
+func predict(data, weights []float64, classIndex int) float64 {
+	activation := weights[classIndex]
+	for index, attr := range data {
+		if index == classIndex {
+			continue
+		}
+		activation += weights[index] * attr
+	}
+
+	if activation >= 0.00 {
+		return 1.00
+	}
+
+	return 0.00
+}
+
+func trainWeights(trainData [][]float64, learningRate float64, epoch, classIndex int) []float64 {
+
+	weights := make([]float64, len(trainData[0]))
+
+	for i := 0; i < epoch; i++ {
+		for _, row := range trainData {
+			result := predict(row, weights, classIndex)
+
+			predictionError := row[classIndex] - result
+			weights[classIndex] += learningRate * predictionError
+
+			for column, attr := range row {
+				if column == classIndex {
+					continue
+				}
+
+				weights[column] += learningRate * predictionError * attr
+			}
+
+		}
+	}
+
+	return weights
+}
+
+func executeSet(ID int, wg *sync.WaitGroup, trainingSet, testingSet [][]float64, learningRate float64, epoch, classIndex int) {
+	fmt.Printf("%v starting with training %v and testing %v\n", ID, len(trainingSet), len(testingSet))
+	weights := trainWeights(trainingSet, learningRate, epoch, classIndex)
+	predictions := make([]float64, len(testingSet))
+	for index, row := range testingSet {
+		predictions[index] = predict(row, weights, classIndex)
+	}
+
+	var correctPredictions int
+	for index, predicted := range predictions {
+		expected := testingSet[index][classIndex]
+		if expected == predicted {
+			correctPredictions += 1
+		}
+	}
+
+	fmt.Printf("Id %v, predicted %v, total %v, accuracy %v\n", ID, correctPredictions, len(testingSet),
+		(float64(len(testingSet)) / float64(correctPredictions) * 100))
+	wg.Done()
+}
+
+func ExecutePerceptron(model *PerceptronModel) error {
+	err := model.loadData()
+	if err != nil {
+		return err
+	}
+
+	splitData := getTrainAndTestData(model.data, model.KFold)
+	wg := new(sync.WaitGroup)
+	wg.Add(model.KFold)
+	for k, v := range splitData {
+		go executeSet(k, wg, v[0], v[1], model.LearningRate, model.Epochs, model.ClassIndex)
+	}
+
+	wg.Wait()
+	return nil
 }
