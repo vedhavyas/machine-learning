@@ -1,4 +1,4 @@
-package main
+package perceptron
 
 import (
 	"fmt"
@@ -120,12 +120,12 @@ func executeSet(ID int, wg *sync.WaitGroup, resultCh chan<- float64, trainingSet
 }
 
 func ExecutePerceptron(model *PerceptronModel) error {
-	err := model.loadData()
+	err := model.PrepareModel()
 	if err != nil {
 		return err
 	}
 
-	splitData := getTrainAndTestData(model.data, model.KFold)
+	splitData := getTrainAndTestData(model.Data, model.KFold)
 	wg := new(sync.WaitGroup)
 	wg.Add(model.KFold)
 	resultCh := make(chan float64)

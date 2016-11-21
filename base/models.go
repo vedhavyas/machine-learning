@@ -1,4 +1,4 @@
-package main
+package base
 
 import (
 	"encoding/csv"
@@ -12,12 +12,12 @@ import (
 type BaseModel struct {
 	FileName               string
 	ClassIndex             int
-	data                   [][]float64
+	Data                   [][]float64
 	categoricalAttributes  map[int]map[string]float64
 	AttributeNormalisation bool
 }
 
-func (model *BaseModel) getClassString(value float64) string {
+func (model *BaseModel) GetClassString(value float64) string {
 	categories := model.categoricalAttributes[model.ClassIndex]
 	for k, v := range categories {
 		if v == value {
@@ -109,7 +109,7 @@ func (model *BaseModel) normaliseData(instances [][]string) {
 
 	// do normalisation if required
 	if !model.AttributeNormalisation {
-		model.data = normaliseSet
+		model.Data = normaliseSet
 		return
 	}
 
@@ -133,11 +133,11 @@ func (model *BaseModel) normaliseData(instances [][]string) {
 		}
 	}
 
-	model.data = normaliseSet
+	model.Data = normaliseSet
 
 }
 
-func (model *BaseModel) loadData() error {
+func (model *BaseModel) PrepareModel() error {
 	fmt.Printf("loading data from '%v'...\n", model.FileName)
 	fh, err := os.Open(model.FileName)
 	if err != nil {
