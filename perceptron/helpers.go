@@ -11,6 +11,7 @@ func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
 }
 
+// getTrainAndTestData will return the data set divided based on k-fold cross validation
 func getTrainAndTestData(data [][]float64, k int) map[int][][][]float64 {
 	indexes := rand.Perm(len(data))
 	shuffledData := make([][]float64, len(data))
@@ -40,6 +41,8 @@ func getTrainAndTestData(data [][]float64, k int) map[int][][][]float64 {
 	return splitData
 }
 
+// getSets will divide the data into training and test
+// index is considered test and rest as training sets
 func getSets(folds [][][]float64, k, index int) [][][]float64 {
 	testData := append([][]float64(nil), folds[index]...)
 	var trainData [][]float64
@@ -57,6 +60,7 @@ func getSets(folds [][][]float64, k, index int) [][][]float64 {
 	}
 }
 
+// predict will predict the class of an instance based on the trianed weights
 func predict(data, weights []float64, classIndex int) float64 {
 	activation := weights[classIndex]
 	for index, attr := range data {
@@ -73,6 +77,7 @@ func predict(data, weights []float64, classIndex int) float64 {
 	return 0.00
 }
 
+// trainWeights will train weights for the given training set based on Stochastic gradient descent
 func trainWeights(trainData [][]float64, learningRate float64, epoch, classIndex int) []float64 {
 
 	weights := make([]float64, len(trainData[0]))
@@ -98,6 +103,7 @@ func trainWeights(trainData [][]float64, learningRate float64, epoch, classIndex
 	return weights
 }
 
+// executeSet will train weights and predict the test classes
 func executeSet(ID int, wg *sync.WaitGroup, resultCh chan<- float64, trainingSet, testingSet [][]float64, learningRate float64, epoch, classIndex int) {
 	fmt.Printf("%v starting with training %v and testing %v\n", ID, len(trainingSet), len(testingSet))
 	weights := trainWeights(trainingSet, learningRate, epoch, classIndex)
@@ -119,6 +125,7 @@ func executeSet(ID int, wg *sync.WaitGroup, resultCh chan<- float64, trainingSet
 	wg.Done()
 }
 
+// ExecutePerceptron will execute perceptron for the given perceptron model
 func ExecutePerceptron(model *PerceptronModel) error {
 	err := model.PrepareModel()
 	if err != nil {
