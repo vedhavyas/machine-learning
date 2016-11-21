@@ -9,6 +9,7 @@ import (
 	"strings"
 )
 
+// BaseModel contains basic attributes and methods to get going
 type BaseModel struct {
 	FileName               string
 	ClassIndex             int
@@ -17,6 +18,8 @@ type BaseModel struct {
 	AttributeNormalisation bool
 }
 
+// GetClassString returns the category of the given normalised value
+// returns zero string if not found
 func (model *BaseModel) GetClassString(value float64) string {
 	categories := model.categoricalAttributes[model.ClassIndex]
 	for k, v := range categories {
@@ -28,6 +31,7 @@ func (model *BaseModel) GetClassString(value float64) string {
 	return ""
 }
 
+//setCategoricalAttributeIndex will initiate the given index as category
 func (model *BaseModel) setCategoricalAttributeIndex(index int) {
 	if model.categoricalAttributes == nil {
 		model.categoricalAttributes = make(map[int]map[string]float64)
@@ -41,6 +45,8 @@ func (model *BaseModel) setCategoricalAttributeIndex(index int) {
 	model.categoricalAttributes[index] = make(map[string]float64)
 }
 
+// checkForCategoricalAttributes will check if the any attribute in the given data is category
+// do that we can normalise the data if needed
 func (model *BaseModel) checkForCategoricalAttributes(instances [][]string) {
 	// we try to convert the attributes in the first row to float64
 	// any failures is considered categorical
@@ -64,6 +70,7 @@ func (model *BaseModel) checkForCategoricalAttributes(instances [][]string) {
 	}
 }
 
+// assignCategoryValues will assign a value for each category for a given attribute
 func (model *BaseModel) assignCategoryValues(instances [][]string) {
 	for index, categories := range model.categoricalAttributes {
 		var value float64
@@ -80,6 +87,7 @@ func (model *BaseModel) assignCategoryValues(instances [][]string) {
 	}
 }
 
+// normaliseData normalise the data set that is loaded
 func (model *BaseModel) normaliseData(instances [][]string) {
 	// look for categories
 	model.checkForCategoricalAttributes(instances)
@@ -137,6 +145,8 @@ func (model *BaseModel) normaliseData(instances [][]string) {
 
 }
 
+// PrepareModel will load the data from the file given and
+// Normalise the data if required
 func (model *BaseModel) PrepareModel() error {
 	fmt.Printf("loading data from '%v'...\n", model.FileName)
 	fh, err := os.Open(model.FileName)
