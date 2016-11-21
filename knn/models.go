@@ -2,6 +2,8 @@ package knn
 
 import . "github.com/vedhavyas/machine-learning/base"
 
+// KNNModel adds a few more attributes apart from existing BaseModel
+// Required model to KNN algorithm
 type KNNModel struct {
 	BaseModel
 	trainingSet [][]float64
@@ -10,21 +12,26 @@ type KNNModel struct {
 	Split       float32
 }
 
-type Neighbour struct {
+// neighbour is a neighbour for a test instance
+type neighbour struct {
 	Distance float64
 	Class    string
 }
 
-type Neighbours []Neighbour
+// neighbours is a plural class that implements sort interface
+type neighbours []neighbour
 
-func (r Neighbours) Len() int {
+// Len returns the size of neighbours
+func (r neighbours) Len() int {
 	return len(r)
 }
 
-func (r Neighbours) Less(i, j int) bool {
+// Less returns bool for i < j
+func (r neighbours) Less(i, j int) bool {
 	return r[i].Distance <= r[j].Distance
 }
 
-func (r Neighbours) Swap(i, j int) {
+// Swap swaps the i and j neighbours
+func (r neighbours) Swap(i, j int) {
 	r[i], r[j] = r[j], r[i]
 }

@@ -12,6 +12,7 @@ func init() {
 	rand.Seed(time.Now().UTC().UnixNano())
 }
 
+// splitSet will the spilt the loaded data into training and testing set based on the split given
 func splitSet(originalData [][]float64, split float32) ([][]float64, [][]float64) {
 	shuffledData := make([][]float64, len(originalData))
 	shuffleInstance := rand.Perm(len(originalData))
@@ -25,6 +26,7 @@ func splitSet(originalData [][]float64, split float32) ([][]float64, [][]float64
 	return shuffledData[:trainingIndex], shuffledData[trainingIndex:]
 }
 
+// getEuclideanDistance will give the euclidean distance between two instances
 func getEuclideanDistance(instance1, instance2 []float64, classIndex int) float64 {
 	var distance float64
 	for i := 0; i < len(instance1); i++ {
@@ -39,13 +41,14 @@ func getEuclideanDistance(instance1, instance2 []float64, classIndex int) float6
 	return math.Sqrt(distance)
 }
 
+// getExpectedClass calculates the k nearest neighbours, conduct election and return winner's class
 func getExpectedClass(model *KNNModel, testInstance []float64) string {
-	var neighbours Neighbours
+	var neighbours neighbours
 
 	// calculate distance from all the training instances
 	for _, instance := range model.trainingSet {
 		distance := getEuclideanDistance(instance, testInstance, model.ClassIndex)
-		neighbour := Neighbour{
+		neighbour := neighbour{
 			Distance: distance,
 			Class:    model.GetClassString(instance[model.ClassIndex]),
 		}
@@ -83,8 +86,8 @@ func getExpectedClass(model *KNNModel, testInstance []float64) string {
 	return winningClass
 }
 
+// ExecuteKNN will execute KNN algorithm for the given model
 func ExecuteKNN(model *KNNModel) error {
-
 	// load data first
 	err := model.PrepareModel()
 	if err != nil {
