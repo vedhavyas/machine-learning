@@ -15,7 +15,7 @@ func main() {
 	k := flag.Int("k", 3, "Value K for the Benchmark")
 	split := flag.Float64("split", 0.6, "Spilit percentage of data. Should be between 0 - 1 float")
 	fileName := flag.String("data", "data/iris.data", "Data File")
-	classIndex := flag.Int("class-index", 4, "Index of the class in a given row")
+	classIndex := flag.Int("class-index", -1, "Index of the class in a given row")
 	normalise := flag.Bool("norm", false, "True to force normalise the attributes")
 	flag.Parse()
 

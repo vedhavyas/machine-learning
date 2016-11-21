@@ -70,6 +70,15 @@ func (model *BaseModel) checkForCategoricalAttributes(instances [][]string) {
 	}
 }
 
+// updateClassIndex will update the class index if default
+func (model *BaseModel) updateClassIndex(data []string) {
+	if model.ClassIndex == -1 {
+		model.ClassIndex = len(data) - 1
+	}
+
+	fmt.Printf("class index is set at %v\n", model.ClassIndex)
+}
+
 // assignCategoryValues will assign a value for each category for a given attribute
 func (model *BaseModel) assignCategoryValues(instances [][]string) {
 	for index, categories := range model.categoricalAttributes {
@@ -89,6 +98,9 @@ func (model *BaseModel) assignCategoryValues(instances [][]string) {
 
 // normaliseData normalise the data set that is loaded
 func (model *BaseModel) normaliseData(instances [][]string) {
+	// update class index
+	model.updateClassIndex(instances[0])
+
 	// look for categories
 	model.checkForCategoricalAttributes(instances)
 
